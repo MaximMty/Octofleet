@@ -6,24 +6,16 @@ import {
   FileBarChart2,
   Filter,
 } from 'lucide-react';
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts';
 import { useFleet } from '@/context/FleetContext';
 import {
   ComplianceBadge,
   MovementTypeBadge,
   RestockStatusBadge,
 } from '@/components/ui/StatusBadge';
+import { ComplianceBarChart } from '@/components/ui/ComplianceBarChart';
 import { exportToCsv } from '@/lib/csv-export';
 import { calculateFleetOrBoatCompliance } from '@/lib/inventory-math';
+import { formatDateTime } from '@/lib/format';
 
 type ReportType =
   | 'COMPLIANCE_BY_BOAT'
@@ -246,20 +238,20 @@ export default function ReportsAndAnalyticsPage() {
   return (
     <div className="space-y-6">
       {/* Header & Report Type Selector */}
-      <div className="bg-white rounded-xl border border-slate-200 p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div className="bg-slate-900 rounded-xl border border-slate-800 p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
-          <h2 className="text-lg font-bold text-slate-950 flex items-center gap-2">
+          <h2 className="text-lg font-bold text-white flex items-center gap-2">
             <FileBarChart2 className="h-5 w-5 text-orange-500" />
             Maritime Fleet Reports & Analytics
           </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-slate-400 mt-0.5">
             Generate compliance audits, shortage manifests, movement ledgers, and CSV exports scoped to your clearance.
           </p>
         </div>
 
         <button
           onClick={handleExportCurrentReportCsv}
-          className="inline-flex items-center gap-2 rounded-lg bg-orange-500 hover:bg-orange-600 px-4 py-2.5 text-xs font-bold text-white shadow-xs self-start"
+          className="inline-flex items-center gap-2 rounded-lg bg-orange-500 hover:bg-orange-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm self-start"
         >
           <Download className="h-4 w-4" />
           Export Active Report (CSV)
@@ -267,8 +259,8 @@ export default function ReportsAndAnalyticsPage() {
       </div>
 
       {/* Report Tabs + Filter Bar */}
-      <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-4">
-        <div className="flex flex-wrap items-center gap-2 border-b border-slate-100 pb-3">
+      <div className="bg-slate-900 rounded-xl border border-slate-800 p-4 space-y-4">
+        <div className="flex flex-wrap items-center gap-2 border-b border-slate-800 pb-3">
           {(
             [
               ['COMPLIANCE_BY_BOAT', '1. Compliance by Boat'],
@@ -283,8 +275,8 @@ export default function ReportsAndAnalyticsPage() {
               onClick={() => setReportType(key)}
               className={`px-3.5 py-2 rounded-lg text-xs font-bold transition-colors ${
                 reportType === key
-                  ? 'bg-[#0B132B] text-white'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  ? 'bg-orange-500 text-white'
+                  : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
               }`}
             >
               {label}
@@ -293,8 +285,8 @@ export default function ReportsAndAnalyticsPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <span className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500">
-            <Filter className="h-3.5 w-3.5 text-orange-500" />
+          <span className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-400">
+            <Filter className="h-3.5 w-3.5 text-orange-400" />
             Report Filters:
           </span>
 
@@ -302,7 +294,7 @@ export default function ReportsAndAnalyticsPage() {
             aria-label="Filter Report by Boat"
             value={boatFilter}
             onChange={(e) => setBoatFilter(e.target.value)}
-            className="text-xs rounded-lg border border-slate-300 px-3 py-1.5 bg-white font-medium"
+            className="text-xs rounded-lg border border-slate-700 px-3 py-1.5 bg-[#0A1122] text-slate-200 font-medium"
           >
             <option value="ALL">All Accessible Boats</option>
             {accessibleBoats.map((b) => (
@@ -316,7 +308,7 @@ export default function ReportsAndAnalyticsPage() {
             aria-label="Filter Report by Category"
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
-            className="text-xs rounded-lg border border-slate-300 px-3 py-1.5 bg-white font-medium"
+            className="text-xs rounded-lg border border-slate-700 px-3 py-1.5 bg-[#0A1122] text-slate-200 font-medium"
           >
             <option value="ALL">All Categories</option>
             {categories.map((c) => (
@@ -326,20 +318,20 @@ export default function ReportsAndAnalyticsPage() {
             ))}
           </select>
 
-          <div className="flex items-center gap-2 text-xs text-slate-600">
+          <div className="flex items-center gap-2 text-xs text-slate-400">
             <span>From:</span>
             <input
               type="date"
               value={dateFrom}
               onChange={(e) => setDateFrom(e.target.value)}
-              className="rounded-lg border border-slate-300 px-2.5 py-1 text-xs"
+              className="rounded-lg border border-slate-700 px-2.5 py-1 text-xs"
             />
             <span>To:</span>
             <input
               type="date"
               value={dateTo}
               onChange={(e) => setDateTo(e.target.value)}
-              className="rounded-lg border border-slate-300 px-2.5 py-1 text-xs"
+              className="rounded-lg border border-slate-700 px-2.5 py-1 text-xs"
             />
           </div>
         </div>
@@ -347,67 +339,53 @@ export default function ReportsAndAnalyticsPage() {
 
       {/* Visual Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-xl border border-slate-200 p-5">
-          <h3 className="text-sm font-bold text-slate-950 mb-1">
+        <div className="bg-slate-900 rounded-xl border border-slate-800 p-5">
+          <h3 className="text-sm font-bold text-white mb-1">
             Vessel Inventory Compliance Comparison (%)
           </h3>
-          <p className="text-xs text-slate-500 mb-4">
+          <p className="text-xs text-slate-400 mb-4">
             Percentage of required stock specifications fulfilled per vessel
           </p>
-          <div className="h-56">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={filteredBoats}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#334155' }} />
-                <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: '#334155' }} />
-                <Tooltip />
-                <Bar dataKey="compliancePercentage" name="Compliance %" radius={[4, 4, 0, 0]}>
-                  {filteredBoats.map((b, i) => (
-                    <Cell
-                      key={i}
-                      fill={
-                        b.overallStatus === 'MEETS_SPEC'
-                          ? '#10b981'
-                          : b.overallStatus === 'ATTENTION'
-                          ? '#f59e0b'
-                          : '#e11d48'
-                      }
-                    />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          <ComplianceBarChart
+            data={filteredBoats.map((b) => ({
+              label: b.name.replace('M/Y ', '').replace('S/Y ', ''),
+              subLabel: b.name,
+              value: b.compliancePercentage,
+              color:
+                b.overallStatus === 'MEETS_SPEC'
+                  ? 'emerald'
+                  : b.overallStatus === 'ATTENTION'
+                  ? 'amber'
+                  : 'rose',
+            }))}
+          />
         </div>
 
-        <div className="bg-white rounded-xl border border-slate-200 p-5">
-          <h3 className="text-sm font-bold text-slate-950 mb-1">
+        <div className="bg-slate-900 rounded-xl border border-slate-800 p-5">
+          <h3 className="text-sm font-bold text-white mb-1">
             Category Specification Compliance Breakdown (%)
           </h3>
-          <p className="text-xs text-slate-500 mb-4">
+          <p className="text-xs text-slate-400 mb-4">
             Fulfillment across Provisioning, Engine, Safety, Deck, and Housekeeping
           </p>
-          <div className="h-56">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={categoryBreakdown}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="code" tick={{ fontSize: 11, fill: '#334155' }} />
-                <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: '#334155' }} />
-                <Tooltip />
-                <Bar dataKey="compliance" name="Category Compliance %" fill="#f97316" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          <ComplianceBarChart
+            data={categoryBreakdown.map((c) => ({
+              label: c.code,
+              subLabel: c.name,
+              value: c.compliance,
+              color: 'orange',
+            }))}
+          />
         </div>
       </div>
 
       {/* Report Data Table */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
+      <div className="bg-slate-900 rounded-xl border border-slate-800 overflow-hidden">
         {reportType === 'COMPLIANCE_BY_BOAT' && (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-slate-200 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                <tr className="border-b border-slate-800 bg-[#0A1122] text-[11px] font-bold uppercase tracking-wider text-slate-400">
                   <th className="py-3.5 px-4">Boat Name</th>
                   <th className="py-3.5 px-4">IMO Number</th>
                   <th className="py-3.5 px-4">Owner / Master</th>
@@ -417,21 +395,21 @@ export default function ReportsAndAnalyticsPage() {
                   <th className="py-3.5 px-4">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-xs">
+              <tbody className="divide-y divide-slate-800 text-xs">
                 {filteredBoats.map((b) => (
-                  <tr key={b.id} className="hover:bg-slate-50">
-                    <td className="py-3.5 px-4 font-bold text-slate-900">{b.name}</td>
-                    <td className="py-3.5 px-4 font-mono text-slate-600">
+                  <tr key={b.id} className="hover:bg-slate-800/60">
+                    <td className="py-3.5 px-4 font-bold text-white">{b.name}</td>
+                    <td className="py-3.5 px-4 font-mono text-slate-400">
                       {b.registrationNumber}
                     </td>
-                    <td className="py-3.5 px-4">
+                    <td className="py-3.5 px-4 text-slate-300">
                       {b.ownerName} / {b.masterName}
                     </td>
                     <td className="py-3.5 px-4 text-right tabular-nums">{b.totalItems}</td>
-                    <td className="py-3.5 px-4 text-right tabular-nums font-bold text-rose-600">
+                    <td className="py-3.5 px-4 text-right tabular-nums font-bold text-rose-400">
                       {b.lowStockItemsCount}
                     </td>
-                    <td className="py-3.5 px-4 text-right tabular-nums font-bold">
+                    <td className="py-3.5 px-4 text-right tabular-nums font-bold text-white">
                       {b.compliancePercentage}%
                     </td>
                     <td className="py-3.5 px-4">
@@ -448,7 +426,7 @@ export default function ReportsAndAnalyticsPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-slate-200 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                <tr className="border-b border-slate-800 bg-[#0A1122] text-[11px] font-bold uppercase tracking-wider text-slate-400">
                   <th className="py-3.5 px-4">Boat</th>
                   <th className="py-3.5 px-4">SKU & Product</th>
                   <th className="py-3.5 px-4">Category</th>
@@ -458,24 +436,24 @@ export default function ReportsAndAnalyticsPage() {
                   <th className="py-3.5 px-4">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-xs">
+              <tbody className="divide-y divide-slate-800 text-xs">
                 {itemsBelowSpec.map((item) => (
-                  <tr key={item.id} className="hover:bg-slate-50">
-                    <td className="py-3.5 px-4 font-bold text-slate-900">
+                  <tr key={item.id} className="hover:bg-slate-800/60">
+                    <td className="py-3.5 px-4 font-bold text-white">
                       {boatNameMap[item.boatId] || item.boatId}
                     </td>
                     <td className="py-3.5 px-4">
-                      <div className="font-bold text-slate-900">{item.productName}</div>
-                      <div className="text-[11px] font-mono text-slate-500">{item.sku}</div>
+                      <div className="font-bold text-white">{item.productName}</div>
+                      <div className="text-[11px] font-mono text-slate-400">{item.sku}</div>
                     </td>
-                    <td className="py-3.5 px-4">{item.categoryName}</td>
-                    <td className="py-3.5 px-4 text-right tabular-nums font-bold">
+                    <td className="py-3.5 px-4 text-slate-300">{item.categoryName}</td>
+                    <td className="py-3.5 px-4 text-right tabular-nums font-bold text-white">
                       {item.currentQty} {item.unit}
                     </td>
-                    <td className="py-3.5 px-4 text-right tabular-nums">
+                    <td className="py-3.5 px-4 text-right tabular-nums text-slate-300">
                       {item.requiredQty} {item.unit}
                     </td>
-                    <td className="py-3.5 px-4 text-right tabular-nums font-bold text-rose-600">
+                    <td className="py-3.5 px-4 text-right tabular-nums font-bold text-rose-400">
                       {item.missingQty} {item.unit} missing
                     </td>
                     <td className="py-3.5 px-4">
@@ -492,7 +470,7 @@ export default function ReportsAndAnalyticsPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-slate-200 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                <tr className="border-b border-slate-800 bg-[#0A1122] text-[11px] font-bold uppercase tracking-wider text-slate-400">
                   <th className="py-3.5 px-4">Date</th>
                   <th className="py-3.5 px-4">Boat</th>
                   <th className="py-3.5 px-4">Product</th>
@@ -502,22 +480,22 @@ export default function ReportsAndAnalyticsPage() {
                   <th className="py-3.5 px-4">Actor</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-xs">
+              <tbody className="divide-y divide-slate-800 text-xs">
                 {filteredMovements.map((m) => (
-                  <tr key={m.id} className="hover:bg-slate-50">
-                    <td className="py-3.5 px-4 text-slate-500 tabular-nums">
-                      {new Date(m.createdAt).toLocaleString()}
+                  <tr key={m.id} className="hover:bg-slate-800/60">
+                    <td className="py-3.5 px-4 text-slate-400 tabular-nums">
+                      {formatDateTime(m.createdAt)}
                     </td>
-                    <td className="py-3.5 px-4 font-bold text-slate-900">{m.boatName}</td>
-                    <td className="py-3.5 px-4 font-semibold">{m.productName}</td>
+                    <td className="py-3.5 px-4 font-bold text-white">{m.boatName}</td>
+                    <td className="py-3.5 px-4 font-semibold text-slate-200">{m.productName}</td>
                     <td className="py-3.5 px-4">
                       <MovementTypeBadge type={m.movementType} />
                     </td>
-                    <td className="py-3.5 px-4 text-right tabular-nums font-bold">
+                    <td className="py-3.5 px-4 text-right tabular-nums font-bold text-white">
                       {m.previousQty} → {m.newQty} {m.unit}
                     </td>
-                    <td className="py-3.5 px-4 text-slate-600">{m.reason}</td>
-                    <td className="py-3.5 px-4 font-medium">{m.performedByName}</td>
+                    <td className="py-3.5 px-4 text-slate-400">{m.reason}</td>
+                    <td className="py-3.5 px-4 font-medium text-slate-200">{m.performedByName}</td>
                   </tr>
                 ))}
               </tbody>
@@ -529,7 +507,7 @@ export default function ReportsAndAnalyticsPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-slate-200 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                <tr className="border-b border-slate-800 bg-[#0A1122] text-[11px] font-bold uppercase tracking-wider text-slate-400">
                   <th className="py-3.5 px-4">Request Code</th>
                   <th className="py-3.5 px-4">Boat</th>
                   <th className="py-3.5 px-4">Product</th>
@@ -538,19 +516,19 @@ export default function ReportsAndAnalyticsPage() {
                   <th className="py-3.5 px-4">Requester / Reviewer</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-xs">
+              <tbody className="divide-y divide-slate-800 text-xs">
                 {filteredRestocks.map((r) => (
-                  <tr key={r.id} className="hover:bg-slate-50">
-                    <td className="py-3.5 px-4 font-mono font-bold">{r.requestCode}</td>
-                    <td className="py-3.5 px-4 font-bold">{r.boatName}</td>
-                    <td className="py-3.5 px-4 font-semibold">{r.productName}</td>
-                    <td className="py-3.5 px-4 text-right tabular-nums font-bold text-orange-600">
+                  <tr key={r.id} className="hover:bg-slate-800/60">
+                    <td className="py-3.5 px-4 font-mono font-bold text-white">{r.requestCode}</td>
+                    <td className="py-3.5 px-4 font-bold text-white">{r.boatName}</td>
+                    <td className="py-3.5 px-4 font-semibold text-slate-200">{r.productName}</td>
+                    <td className="py-3.5 px-4 text-right tabular-nums font-bold text-orange-400">
                       +{r.requestedQty} {r.unit}
                     </td>
                     <td className="py-3.5 px-4">
                       <RestockStatusBadge status={r.status} />
                     </td>
-                    <td className="py-3.5 px-4">
+                    <td className="py-3.5 px-4 text-slate-300">
                       {r.requestedByName}
                       {r.reviewerName ? ` → Reviewed by ${r.reviewerName}` : ''}
                     </td>
@@ -565,7 +543,7 @@ export default function ReportsAndAnalyticsPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-slate-200 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                <tr className="border-b border-slate-800 bg-[#0A1122] text-[11px] font-bold uppercase tracking-wider text-slate-400">
                   <th className="py-3.5 px-4">Code</th>
                   <th className="py-3.5 px-4">Category Name</th>
                   <th className="py-3.5 px-4 text-right">Tracked Items</th>
@@ -575,22 +553,22 @@ export default function ReportsAndAnalyticsPage() {
                   <th className="py-3.5 px-4 text-right">Category Compliance %</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-xs">
+              <tbody className="divide-y divide-slate-800 text-xs">
                 {categoryBreakdown.map((c) => (
-                  <tr key={c.id} className="hover:bg-slate-50">
-                    <td className="py-3.5 px-4 font-mono font-bold">{c.code}</td>
-                    <td className="py-3.5 px-4 font-bold text-slate-900">{c.name}</td>
+                  <tr key={c.id} className="hover:bg-slate-800/60">
+                    <td className="py-3.5 px-4 font-mono font-bold text-orange-400">{c.code}</td>
+                    <td className="py-3.5 px-4 font-bold text-white">{c.name}</td>
                     <td className="py-3.5 px-4 text-right tabular-nums">{c.itemCount}</td>
-                    <td className="py-3.5 px-4 text-right tabular-nums font-bold">
+                    <td className="py-3.5 px-4 text-right tabular-nums font-bold text-white">
                       {c.totalCurrent}
                     </td>
-                    <td className="py-3.5 px-4 text-right tabular-nums">
+                    <td className="py-3.5 px-4 text-right tabular-nums text-slate-300">
                       {c.totalRequired}
                     </td>
-                    <td className="py-3.5 px-4 text-right tabular-nums font-bold text-rose-600">
+                    <td className="py-3.5 px-4 text-right tabular-nums font-bold text-rose-400">
                       {c.totalMissing}
                     </td>
-                    <td className="py-3.5 px-4 text-right tabular-nums font-bold text-slate-900">
+                    <td className="py-3.5 px-4 text-right tabular-nums font-bold text-white">
                       {c.compliance}%
                     </td>
                   </tr>

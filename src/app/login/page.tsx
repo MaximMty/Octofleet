@@ -35,7 +35,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0B132B] text-white flex flex-col justify-between p-6 lg:p-10">
+    <div className="min-h-screen bg-[#060B16] text-slate-100 flex flex-col justify-between p-6 lg:p-10">
       {/* Top Bar */}
       <div className="max-w-6xl w-full mx-auto flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3">
@@ -63,22 +63,22 @@ export default function LoginPage() {
       {/* Main Auth Grid */}
       <div className="max-w-6xl w-full mx-auto my-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left: Credentials Sign-In Card */}
-        <div className="lg:col-span-5 bg-white text-slate-900 rounded-2xl p-8 shadow-2xl border border-slate-200">
+        <div className="lg:col-span-5 bg-slate-900 text-slate-100 rounded-2xl p-8 shadow-2xl border border-slate-800">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="text-xl font-bold text-slate-950">Sign in to OctoFleet</h1>
-              <p className="text-xs text-slate-500 mt-1">
+              <h1 className="text-xl font-bold text-white">Sign in to OctoFleet</h1>
+              <p className="text-xs text-slate-400 mt-1">
                 Authenticate with your maritime crew or owner profile
               </p>
             </div>
-            <div className="h-10 w-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-700">
+            <div className="h-10 w-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-orange-400">
               <Lock className="h-5 w-5" />
             </div>
           </div>
 
           <form onSubmit={handleFormSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">
                 Maritime Email Address
               </label>
               <input
@@ -87,12 +87,12 @@ export default function LoginPage() {
                 value={emailInput}
                 onChange={(e) => setEmailInput(e.target.value)}
                 placeholder="m.vance@octofleet.maritime"
-                className="w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full rounded-lg border border-slate-700 bg-[#0A1122] px-3.5 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">
                 Passphrase
               </label>
               <input
@@ -100,12 +100,12 @@ export default function LoginPage() {
                 required
                 value={passwordInput}
                 onChange={(e) => setPasswordInput(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full rounded-lg border border-slate-700 bg-[#0A1122] px-3.5 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
               />
             </div>
 
             {error && (
-              <div className="rounded-lg bg-rose-50 border border-rose-200 p-3 text-xs font-medium text-rose-700">
+              <div className="rounded-lg bg-rose-500/15 border border-rose-500/30 p-3 text-xs font-medium text-rose-300">
                 {error}
               </div>
             )}
@@ -119,8 +119,8 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <div className="mt-6 pt-5 border-t border-slate-200 text-xs text-slate-500 flex items-start gap-2.5">
-            <ShieldCheck className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+          <div className="mt-6 pt-5 border-t border-slate-800 text-xs text-slate-400 flex items-start gap-2.5">
+            <ShieldCheck className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
             <span>
               {isSupabaseConfigured
                 ? 'Connected to live Supabase Auth & RLS instance.'
@@ -130,7 +130,7 @@ export default function LoginPage() {
         </div>
 
         {/* Right: Interactive Role & Account Selector for Testing ADMIN, MASTER, and OWNER */}
-        <div className="lg:col-span-7 bg-slate-900/90 border border-slate-800 rounded-2xl p-8">
+        <div className="lg:col-span-7 bg-[#0A1122] border border-slate-800 rounded-2xl p-8">
           <div className="flex items-center justify-between mb-6">
             <div>
               <span className="text-xs font-bold uppercase tracking-widest text-orange-400">
@@ -154,7 +154,7 @@ export default function LoginPage() {
                   key={u.id}
                   className={`rounded-xl border p-4 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
                     isCurrent
-                      ? 'border-orange-500 bg-slate-800/90'
+                      ? 'border-orange-500 bg-slate-900'
                       : 'border-slate-800 bg-slate-950/60 hover:border-slate-700'
                   }`}
                 >

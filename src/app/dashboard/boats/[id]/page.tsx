@@ -12,6 +12,7 @@ import {
   History,
   Lock,
   Plus,
+  Radar,
   Search,
   Ship,
 } from 'lucide-react';
@@ -233,103 +234,130 @@ export default function BoatDetailPage({
   return (
     <div className="space-y-6">
       {/* Top Vessel Header Card */}
-      <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-2xs">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div>
-            <Link
-              href="/dashboard/boats"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-orange-600 mb-2"
-            >
-              <ArrowLeft className="h-3.5 w-3.5" />
-              Back to Fleet Registry
-            </Link>
-            <div className="flex items-center gap-3 flex-wrap">
-              <div className="h-10 w-10 rounded-xl bg-[#0B132B] text-orange-400 flex items-center justify-center">
-                <Ship className="h-5 w-5" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2.5 flex-wrap">
-                  <h2 className="text-xl font-bold text-slate-950">{boat.name}</h2>
-                  <span className="text-xs font-mono bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-semibold">
-                    {boat.registrationNumber}
-                  </span>
-                  <ComplianceBadge status={boat.overallStatus} />
-                </div>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  {boat.vesselClass} • Home Port: {boat.homePort} • Owner: {boat.ownerName} • Master:{' '}
-                  {boat.masterName}
-                </p>
-              </div>
+      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-2xs">
+        <div className="grid grid-cols-1 lg:grid-cols-12">
+          {/* Vessel Photograph */}
+          <div className="lg:col-span-5 relative min-h-[220px] sm:min-h-[260px] bg-slate-900 overflow-hidden">
+            <img
+              src={boat.imageUrl || '/boats/sovereign.jpg'}
+              alt={`${boat.name} — ${boat.vesselClass}`}
+              className="h-full w-full object-cover object-center"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent" />
+            <div className="absolute top-4 left-4">
+              <Link
+                href="/dashboard/boats"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-slate-950/75 backdrop-blur-xs border border-white/15 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-900 transition-colors"
+              >
+                <ArrowLeft className="h-3.5 w-3.5 text-orange-400" />
+                Back to Fleet Registry
+              </Link>
+            </div>
+            <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between gap-2">
+              <span className="inline-flex items-center gap-1.5 text-xs font-mono bg-slate-950/80 backdrop-blur-xs text-white border border-white/15 px-2.5 py-1 rounded-md font-semibold">
+                <Ship className="h-3.5 w-3.5 text-orange-400" />
+                {boat.registrationNumber} • {boat.lengthMeters}m LOA
+              </span>
+              <ComplianceBadge status={boat.overallStatus} />
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2.5">
-            <button
-              onClick={handleExportBoatCsv}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 px-3.5 py-2 text-xs font-bold text-slate-800"
-            >
-              <Download className="h-4 w-4 text-slate-600" />
-              Export CSV Report
-            </button>
-            {currentUser.role === 'ADMIN' && (
-              <>
-                <Link
-                  href="/dashboard/integrations"
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 px-3.5 py-2 text-xs font-bold text-slate-800"
-                >
-                  <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
-                  Sheet Sync ({boat.googleWorksheetName || 'Configure'})
-                </Link>
-                <button
-                  onClick={() => {
-                    setNewSku(`PRV-NEW-${Math.floor(100 + Math.random() * 899)}`);
-                    setNewName('');
-                    setNewDescription('');
-                    setAddItemModalOpen(true);
-                  }}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-orange-500 hover:bg-orange-600 px-4 py-2 text-xs font-bold text-white"
-                >
-                  <Plus className="h-4 w-4" />
-                  Add Spec Item
-                </button>
-              </>
-            )}
-          </div>
-        </div>
+          {/* Vessel Details & Metrics */}
+          <div className="lg:col-span-7 p-6 flex flex-col justify-between">
+            <div>
+              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-950">{boat.name}</h2>
+                  <p className="text-xs font-medium text-slate-600 mt-1">
+                    {boat.vesselClass} • Home Port: <strong>{boat.homePort}</strong>
+                  </p>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Owner: <strong>{boat.ownerName}</strong> • Fleet Master:{' '}
+                    <strong>{boat.masterName}</strong>
+                  </p>
+                </div>
 
-        {/* Summary Metrics Row */}
-        <div className="mt-6 pt-5 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div className="rounded-lg bg-slate-50 p-3.5 border border-slate-100">
-            <span className="text-[11px] font-bold uppercase text-slate-400">
-              Specification Compliance
-            </span>
-            <p className="text-2xl font-bold text-slate-950 mt-1 tabular-nums">
-              {boat.compliancePercentage}%
-            </p>
-          </div>
-          <div className="rounded-lg bg-slate-50 p-3.5 border border-slate-100">
-            <span className="text-[11px] font-bold uppercase text-slate-400">
-              Total Tracked Items
-            </span>
-            <p className="text-2xl font-bold text-slate-950 mt-1 tabular-nums">
-              {boat.totalItems}
-            </p>
-          </div>
-          <div className="rounded-lg bg-slate-50 p-3.5 border border-slate-100">
-            <span className="text-[11px] font-bold uppercase text-slate-400">
-              Items Below Spec
-            </span>
-            <p className="text-2xl font-bold text-rose-600 mt-1 tabular-nums">
-              {boat.lowStockItemsCount}
-            </p>
-          </div>
-          <div className="rounded-lg bg-slate-50 p-3.5 border border-slate-100">
-            <span className="text-[11px] font-bold uppercase text-slate-400">
-              Spec Standard
-            </span>
-            <p className="text-sm font-bold text-slate-900 mt-2 truncate">
-              {boat.specificationTier}
-            </p>
+                <div className="flex flex-wrap items-center gap-2 shrink-0">
+                  <Link
+                    href={`/dashboard/tracker?boat=${boat.id}`}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 px-3 py-2 text-xs font-bold text-slate-800"
+                  >
+                    <Radar className="h-4 w-4 text-orange-500" />
+                    Track Live
+                  </Link>
+                  <button
+                    onClick={handleExportBoatCsv}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 px-3 py-2 text-xs font-bold text-slate-800"
+                  >
+                    <Download className="h-4 w-4 text-slate-600" />
+                    Export CSV
+                  </button>
+                  {currentUser.role === 'ADMIN' && (
+                    <>
+                      <Link
+                        href="/dashboard/integrations"
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 px-3 py-2 text-xs font-bold text-slate-800"
+                      >
+                        <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
+                        Sheet Sync
+                      </Link>
+                      <button
+                        onClick={() => {
+                          setNewSku(`PRV-NEW-${Math.floor(100 + Math.random() * 899)}`);
+                          setNewName('');
+                          setNewDescription('');
+                          setAddItemModalOpen(true);
+                        }}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-orange-500 hover:bg-orange-600 px-3.5 py-2 text-xs font-bold text-white"
+                      >
+                        <Plus className="h-4 w-4" />
+                        Add Spec Item
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              <p className="text-xs text-slate-600 mt-3 leading-relaxed">
+                {boat.description}
+              </p>
+            </div>
+
+            {/* Summary Metrics Row */}
+            <div className="mt-5 pt-4 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="rounded-lg bg-slate-50 p-3 border border-slate-100">
+                <span className="text-[10px] font-bold uppercase text-slate-400">
+                  Compliance
+                </span>
+                <p className="text-xl font-bold text-slate-950 mt-0.5 tabular-nums">
+                  {boat.compliancePercentage}%
+                </p>
+              </div>
+              <div className="rounded-lg bg-slate-50 p-3 border border-slate-100">
+                <span className="text-[10px] font-bold uppercase text-slate-400">
+                  Tracked Items
+                </span>
+                <p className="text-xl font-bold text-slate-950 mt-0.5 tabular-nums">
+                  {boat.totalItems}
+                </p>
+              </div>
+              <div className="rounded-lg bg-slate-50 p-3 border border-slate-100">
+                <span className="text-[10px] font-bold uppercase text-slate-400">
+                  Below Spec
+                </span>
+                <p className="text-xl font-bold text-rose-600 mt-0.5 tabular-nums">
+                  {boat.lowStockItemsCount}
+                </p>
+              </div>
+              <div className="rounded-lg bg-slate-50 p-3 border border-slate-100">
+                <span className="text-[10px] font-bold uppercase text-slate-400">
+                  Spec Standard
+                </span>
+                <p className="text-xs font-bold text-slate-900 mt-1.5 truncate" title={boat.specificationTier}>
+                  {boat.specificationTier}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>

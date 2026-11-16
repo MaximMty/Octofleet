@@ -4,19 +4,163 @@
 
 @layer base {
   :root {
-    --navy-950: #070d19;
-    --navy-900: #0b132b;
-    --navy-800: #152238;
+    color-scheme: dark;
+    --navy-950: #060b16;
+    --navy-900: #0a1122;
+    --navy-800: #0f172a;
     --marine-orange: #f97316;
     --marine-orange-hover: #ea580c;
   }
 
   body {
-    background-color: #f8fafc;
-    color: #0f172a;
+    background-color: #060b16;
+    color: #f1f5f9;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     -webkit-font-smoothing: antialiased;
   }
+
+  input,
+  select,
+  textarea {
+    background-color: #0a1122 !important;
+    color: #f8fafc !important;
+    border-color: #334155 !important;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: #64748b !important;
+  }
+
+  option {
+    background-color: #0f172a;
+    color: #f8fafc;
+  }
+}
+
+/* Global Dark Mode Surface & Typography Harmonization */
+.dark .bg-white {
+  background-color: #0f172a !important;
+}
+
+.dark .bg-\[\#F8FAFC\],
+.dark .bg-slate-50,
+.dark .bg-slate-50\/80 {
+  background-color: #0a1122 !important;
+}
+
+.dark .bg-slate-100,
+.dark .bg-slate-100\/90 {
+  background-color: #1e293b !important;
+}
+
+.dark .hover\:bg-slate-50:hover,
+.dark .hover\:bg-slate-50\/80:hover,
+.dark .hover\:bg-slate-50\/90:hover,
+.dark .hover\:bg-orange-50\/40:hover {
+  background-color: rgba(30, 41, 59, 0.65) !important;
+}
+
+.dark .border-slate-100,
+.dark .border-slate-200,
+.dark .border-slate-200\/80,
+.dark .border-slate-200\/90 {
+  border-color: #1e293b !important;
+}
+
+.dark .border-slate-300 {
+  border-color: #334155 !important;
+}
+
+.dark .divide-slate-100 > :not([hidden]) ~ :not([hidden]),
+.dark .divide-slate-200 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #1e293b !important;
+}
+
+.dark .text-slate-950,
+.dark .text-slate-900 {
+  color: #f8fafc !important;
+}
+
+.dark .text-slate-800,
+.dark .text-slate-700 {
+  color: #e2e8f0 !important;
+}
+
+.dark .text-slate-600,
+.dark .text-slate-500 {
+  color: #94a3b8 !important;
+}
+
+/* Dark Mode Status Surface Tints */
+.dark .bg-amber-50,
+.dark .bg-amber-50\/50,
+.dark .bg-amber-50\/60,
+.dark .bg-amber-50\/70,
+.dark .bg-amber-50\/90,
+.dark .bg-amber-100 {
+  background-color: rgba(245, 158, 11, 0.12) !important;
+}
+
+.dark .border-amber-200,
+.dark .border-amber-300 {
+  border-color: rgba(245, 158, 11, 0.35) !important;
+}
+
+.dark .text-amber-950,
+.dark .text-amber-900,
+.dark .text-amber-800,
+.dark .text-amber-700 {
+  color: #fcd34d !important;
+}
+
+.dark .bg-emerald-50,
+.dark .bg-emerald-50\/40,
+.dark .bg-emerald-100 {
+  background-color: rgba(16, 185, 129, 0.12) !important;
+}
+
+.dark .border-emerald-200,
+.dark .border-emerald-300 {
+  border-color: rgba(16, 185, 129, 0.35) !important;
+}
+
+.dark .text-emerald-800,
+.dark .text-emerald-700,
+.dark .text-emerald-600 {
+  color: #34d399 !important;
+}
+
+.dark .bg-rose-50,
+.dark .bg-rose-50\/70,
+.dark .bg-rose-50\/95,
+.dark .bg-rose-100 {
+  background-color: rgba(244, 63, 94, 0.12) !important;
+}
+
+.dark .border-rose-200,
+.dark .border-rose-300 {
+  border-color: rgba(244, 63, 94, 0.35) !important;
+}
+
+.dark .text-rose-900,
+.dark .text-rose-700,
+.dark .text-rose-600 {
+  color: #fb7185 !important;
+}
+
+.dark .bg-sky-50,
+.dark .bg-sky-50\/80 {
+  background-color: rgba(14, 165, 233, 0.12) !important;
+}
+
+.dark .border-sky-200 {
+  border-color: rgba(14, 165, 233, 0.35) !important;
+}
+
+.dark .text-sky-900,
+.dark .text-sky-700 {
+  color: #7dd3fc !important;
 }
 
 .tabular-nums {

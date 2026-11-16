@@ -4,18 +4,30 @@ import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
 import {
   Anchor,
+  Camera,
   Edit3,
   ExternalLink,
   FileSpreadsheet,
+  Image as ImageIcon,
   MapPin,
   Plus,
+  Radar,
   Search,
   Ship,
+  Upload,
   UserCheck,
 } from 'lucide-react';
 import { useFleet } from '@/context/FleetContext';
 import { ComplianceBadge } from '@/components/ui/StatusBadge';
 import { ComplianceStatus, ComputedBoatSummary } from '@/types/domain';
+
+const PRESET_BOAT_IMAGES = [
+  { label: '62m Displacement Superyacht', url: '/boats/sovereign.jpg' },
+  { label: '48m Fast Planing Yacht', url: '/boats/aurelia.jpg' },
+  { label: '43m Performance Sailing Sloop', url: '/boats/solaris.jpg' },
+  { label: '74m Ice-Class Explorer', url: '/boats/borealis.jpg' },
+  { label: '38m Mediterranean Weekender', url: '/boats/mistral.jpg' },
+];
 
 export default function BoatsManagementPage() {
   const {
@@ -36,12 +48,14 @@ export default function BoatsManagementPage() {
   const [vesselClass, setVesselClass] = useState('50m Displacement Motor Yacht');
   const [lengthMeters, setLengthMeters] = useState(50);
   const [homePort, setHomePort] = useState('Port Hercule, Monaco');
+  const [imageUrl, setImageUrl] = useState('/boats/sovereign.jpg');
   const [ownerId, setOwnerId] = useState('usr-owner-1');
   const [masterId, setMasterId] = useState('usr-master-1');
   const [coOwnerId, setCoOwnerId] = useState<string>('');
   const [specificationTier, setSpecificationTier] = useState('MCA LY3 Commercial Unrestricted');
   const [googleSheetId, setGoogleSheetId] = useState('');
   const [googleWorksheetName, setGoogleWorksheetName] = useState('Inventory_2026');
+  const [mmsi, setMmsi] = useState('');
   const [description, setDescription] = useState('');
   const [formError, setFormError] = useState('');
 
@@ -76,12 +90,14 @@ export default function BoatsManagementPage() {
     setVesselClass('52m Displacement Motor Yacht');
     setLengthMeters(52);
     setHomePort('Port Hercule, Monaco');
+    setImageUrl('/boats/sovereign.jpg');
     setOwnerId(owners[0]?.id || 'usr-owner-1');
     setMasterId(masters[0]?.id || 'usr-master-1');
     setCoOwnerId('');
     setSpecificationTier('MCA LY3 Commercial Unrestricted');
     setGoogleSheetId('');
     setGoogleWorksheetName('Master_Inventory');
+    setMmsi('');
     setDescription(
       'Commercial charter & private displacement superyacht configured with full SOLAS and galley inventory specifications.'
     );
@@ -96,12 +112,14 @@ export default function BoatsManagementPage() {
     setVesselClass(boat.vesselClass);
     setLengthMeters(boat.lengthMeters);
     setHomePort(boat.homePort);
+    setImageUrl(boat.imageUrl || '/boats/sovereign.jpg');
     setOwnerId(boat.ownerId);
     setMasterId(boat.masterId);
     setCoOwnerId(boat.additionalOwnerIds?.[0] || '');
     setSpecificationTier(boat.specificationTier);
     setGoogleSheetId(boat.googleSheetId || '');
     setGoogleWorksheetName(boat.googleWorksheetName || 'Inventory');
+    setMmsi(boat.mmsi || '');
     setDescription(boat.description);
     setFormError('');
     setModalOpen(true);
@@ -110,6 +128,11 @@ export default function BoatsManagementPage() {
   const handleBoatSave = (e: React.FormEvent) => {
     e.preventDefault();
     setFormError('');
+    const cleanedMmsi = mmsi.replace(/\D/g, '');
+    if (cleanedMmsi && cleanedMmsi.length !== 9) {
+      setFormError('MMSI must be exactly 9 digits (or leave it blank).');
+      return;
+    }
     const res = createOrUpdateBoat({
       id: editingBoatId,
       name,
@@ -117,12 +140,14 @@ export default function BoatsManagementPage() {
       vesselClass,
       lengthMeters: Number(lengthMeters),
       homePort,
+      imageUrl: imageUrl.trim() || '/boats/sovereign.jpg',
       ownerId,
       masterId,
       additionalOwnerIds: coOwnerId ? [coOwnerId] : [],
       specificationTier,
       googleSheetId: googleSheetId.trim() || undefined,
       googleWorksheetName: googleWorksheetName.trim() || undefined,
+      mmsi: cleanedMmsi || undefined,
       description,
     });
     if (!res.ok) {
@@ -185,141 +210,167 @@ export default function BoatsManagementPage() {
 
       {/* Vessel Cards Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {filteredBoats.map((boat) => (
-          <div
-            key={boat.id}
-            className="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden flex flex-col justify-between hover:border-slate-300 transition-all"
-          >
-            <div className="p-6">
-              {/* Top Row: Name, IMO & Status */}
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex items-start gap-3.5">
-                  <div className="h-11 w-11 rounded-xl bg-[#0B132B] text-orange-400 flex items-center justify-center shrink-0">
-                    <Ship className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2.5 flex-wrap">
-                      <Link
-                        href={`/dashboard/boats/${boat.id}`}
-                        className="text-base font-bold text-slate-950 hover:text-orange-600 transition-colors"
-                      >
-                        {boat.name}
-                      </Link>
-                      <span className="text-xs font-mono bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-semibold">
-                        {boat.registrationNumber}
-                      </span>
-                    </div>
-                    <p className="text-xs text-slate-500 mt-0.5">
-                      {boat.vesselClass} • {boat.lengthMeters}m LOA
-                    </p>
-                  </div>
-                </div>
-                <ComplianceBadge status={boat.overallStatus} />
-              </div>
-
-              {/* Description */}
-              <p className="text-xs text-slate-600 mt-4 leading-relaxed">
-                {boat.description}
-              </p>
-
-              {/* Metadata Grid */}
-              <div className="mt-5 grid grid-cols-2 sm:grid-cols-3 gap-3 rounded-lg bg-slate-50 p-3.5 border border-slate-100 text-xs">
-                <div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-                    Assigned Owner
-                  </span>
-                  <span className="font-semibold text-slate-900 mt-0.5 flex items-center gap-1">
-                    <UserCheck className="h-3.5 w-3.5 text-emerald-600" />
-                    {boat.ownerName}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-                    Assigned Master
-                  </span>
-                  <span className="font-semibold text-slate-900 mt-0.5 flex items-center gap-1">
-                    <Anchor className="h-3.5 w-3.5 text-sky-600" />
-                    {boat.masterName}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-                    Home Port
-                  </span>
-                  <span className="font-semibold text-slate-900 mt-0.5 flex items-center gap-1 truncate">
-                    <MapPin className="h-3.5 w-3.5 text-orange-500 shrink-0" />
-                    {boat.homePort}
-                  </span>
-                </div>
-              </div>
-
-              {/* Specification & Google Sheets Connection Strip */}
-              <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600">
-                <div>
-                  <span className="text-slate-400">Spec Tier:</span>{' '}
-                  <strong className="text-slate-800">{boat.specificationTier}</strong>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" />
-                  <span>
-                    {boat.googleWorksheetName
-                      ? `Sheet: ${boat.googleWorksheetName}`
-                      : 'No Google Sheet linked'}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Bottom Compliance Bar & Actions */}
-            <div className="px-6 py-3.5 bg-slate-50/80 border-t border-slate-200/80 flex items-center justify-between gap-4">
-              <div className="flex items-center gap-4 text-xs">
-                <div>
-                  <span className="text-slate-500">Compliance:</span>{' '}
-                  <strong className="text-slate-950 tabular-nums">
-                    {boat.compliancePercentage}%
-                  </strong>
-                </div>
-                <div>
-                  <span className="text-slate-500">Items:</span>{' '}
-                  <strong className="text-slate-950 tabular-nums">
-                    {boat.totalItems}
-                  </strong>
-                </div>
-                <div>
-                  <span className="text-slate-500">Below Spec:</span>{' '}
-                  <strong
-                    className={`tabular-nums ${
-                      boat.lowStockItemsCount > 0
-                        ? 'text-rose-600'
-                        : 'text-emerald-600'
-                    }`}
-                  >
-                    {boat.lowStockItemsCount}
-                  </strong>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                {currentUser.role === 'ADMIN' && (
-                  <button
-                    onClick={() => openEditModal(boat)}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700"
-                  >
-                    <Edit3 className="h-3.5 w-3.5" />
-                    Edit Profile
-                  </button>
-                )}
+        {filteredBoats.map((boat) => {
+          const boatImg = boat.imageUrl || '/boats/sovereign.jpg';
+          return (
+            <div
+              key={boat.id}
+              className="group bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden flex flex-col justify-between hover:border-slate-300 hover:shadow-md transition-all"
+            >
+              <div>
+                {/* Vessel Photograph Hero Banner */}
                 <Link
                   href={`/dashboard/boats/${boat.id}`}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-[#0B132B] hover:bg-slate-800 px-3.5 py-1.5 text-xs font-bold text-white"
+                  className="relative block h-52 sm:h-60 w-full overflow-hidden bg-slate-900"
                 >
-                  Open Inventory
-                  <ExternalLink className="h-3.5 w-3.5 text-orange-400" />
+                  <img
+                    src={boatImg}
+                    alt={`${boat.name} — ${boat.vesselClass}`}
+                    className="h-full w-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-950/25 to-transparent" />
+
+                  {/* Top Overlay Badges */}
+                  <div className="absolute top-3.5 left-4 right-4 flex items-center justify-between gap-2">
+                    <span className="inline-flex items-center gap-1.5 text-xs font-mono bg-slate-950/75 backdrop-blur-xs text-white border border-white/15 px-2.5 py-1 rounded-md font-semibold shadow-xs">
+                      <Ship className="h-3.5 w-3.5 text-orange-400" />
+                      {boat.registrationNumber}
+                    </span>
+                    <div className="shadow-xs">
+                      <ComplianceBadge status={boat.overallStatus} />
+                    </div>
+                  </div>
+
+                  {/* Bottom Overlay Title & Class */}
+                  <div className="absolute bottom-3.5 left-4 right-4 flex items-end justify-between gap-3">
+                    <div>
+                      <h3 className="text-lg font-bold text-white group-hover:text-orange-300 transition-colors drop-shadow-xs">
+                        {boat.name}
+                      </h3>
+                      <p className="text-xs text-slate-200 font-medium mt-0.5">
+                        {boat.vesselClass} • {boat.lengthMeters}m LOA
+                      </p>
+                    </div>
+                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold bg-white/15 backdrop-blur-xs text-white px-2.5 py-1 rounded-md border border-white/15 shrink-0">
+                      <MapPin className="h-3 w-3 text-orange-400" />
+                      {boat.homePort}
+                    </span>
+                  </div>
                 </Link>
+
+                <div className="p-6 pt-4">
+                  {/* Description */}
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    {boat.description}
+                  </p>
+
+                  {/* Metadata Grid */}
+                  <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3 rounded-lg bg-slate-50 p-3.5 border border-slate-100 text-xs">
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                        Assigned Owner
+                      </span>
+                      <span className="font-semibold text-slate-900 mt-0.5 flex items-center gap-1">
+                        <UserCheck className="h-3.5 w-3.5 text-emerald-600" />
+                        {boat.ownerName}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                        Assigned Master
+                      </span>
+                      <span className="font-semibold text-slate-900 mt-0.5 flex items-center gap-1">
+                        <Anchor className="h-3.5 w-3.5 text-sky-600" />
+                        {boat.masterName}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                        Home Port
+                      </span>
+                      <span className="font-semibold text-slate-900 mt-0.5 flex items-center gap-1 truncate">
+                        <MapPin className="h-3.5 w-3.5 text-orange-500 shrink-0" />
+                        {boat.homePort}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Specification & Google Sheets Connection Strip */}
+                  <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600">
+                    <div>
+                      <span className="text-slate-400">Spec Tier:</span>{' '}
+                      <strong className="text-slate-800">{boat.specificationTier}</strong>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" />
+                      <span>
+                        {boat.googleWorksheetName
+                          ? `Sheet: ${boat.googleWorksheetName}`
+                          : 'No Google Sheet linked'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bottom Compliance Bar & Actions */}
+              <div className="px-6 py-3.5 bg-slate-50/80 border-t border-slate-200/80 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4 text-xs">
+                  <div>
+                    <span className="text-slate-500">Compliance:</span>{' '}
+                    <strong className="text-slate-950 tabular-nums">
+                      {boat.compliancePercentage}%
+                    </strong>
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Items:</span>{' '}
+                    <strong className="text-slate-950 tabular-nums">
+                      {boat.totalItems}
+                    </strong>
+                  </div>
+                  <div>
+                    <span className="text-slate-500">Below Spec:</span>{' '}
+                    <strong
+                      className={`tabular-nums ${
+                        boat.lowStockItemsCount > 0
+                          ? 'text-rose-600'
+                          : 'text-emerald-600'
+                      }`}
+                    >
+                      {boat.lowStockItemsCount}
+                    </strong>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {currentUser.role === 'ADMIN' && (
+                    <button
+                      onClick={() => openEditModal(boat)}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700"
+                    >
+                      <Edit3 className="h-3.5 w-3.5" />
+                      Edit Profile
+                    </button>
+                  )}
+                  <Link
+                    href={`/dashboard/tracker?boat=${boat.id}`}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700"
+                  >
+                    <Radar className="h-3.5 w-3.5 text-orange-500" />
+                    Track Live
+                  </Link>
+                  <Link
+                    href={`/dashboard/boats/${boat.id}`}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-[#0B132B] hover:bg-slate-800 px-3.5 py-1.5 text-xs font-bold text-white"
+                  >
+                    Open Inventory
+                    <ExternalLink className="h-3.5 w-3.5 text-orange-400" />
+                  </Link>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Create / Edit Boat Modal (Admin Only) */}
@@ -361,6 +412,24 @@ export default function BoatsManagementPage() {
                     className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs font-mono"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase text-slate-600 mb-1">
+                  MMSI (Live AIS Tracking)
+                </label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={mmsi}
+                  onChange={(e) => setMmsi(e.target.value)}
+                  placeholder="9-digit MMSI, e.g. 319012345"
+                  maxLength={11}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs font-mono"
+                />
+                <p className="text-[11px] text-slate-500 mt-1">
+                  Shown on the yacht&apos;s MarineTraffic page. Used by the Yacht Tracker to lock the live map onto this vessel.
+                </p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -489,6 +558,73 @@ export default function BoatsManagementPage() {
                     placeholder="Inventory_2026"
                     className="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs"
                   />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase text-slate-600 mb-1.5">
+                  Vessel Photograph
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-start rounded-xl border border-slate-200 bg-slate-50/70 p-3">
+                  <div className="sm:col-span-5 relative h-32 rounded-lg overflow-hidden bg-slate-900 border border-slate-200">
+                    <img
+                      src={imageUrl || '/boats/sovereign.jpg'}
+                      alt="Vessel preview"
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                  <div className="sm:col-span-7 space-y-2.5">
+                    <div>
+                      <span className="block text-[10px] font-bold uppercase text-slate-500 mb-1">
+                        Select Fleet Vessel Photo Preset
+                      </span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {PRESET_BOAT_IMAGES.map((preset) => (
+                          <button
+                            key={preset.url}
+                            type="button"
+                            onClick={() => setImageUrl(preset.url)}
+                            className={`rounded-md px-2 py-1 text-[11px] font-semibold border transition-colors ${
+                              imageUrl === preset.url
+                                ? 'bg-orange-500 text-white border-orange-500'
+                                : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
+                            }`}
+                          >
+                            {preset.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={imageUrl}
+                        onChange={(e) => setImageUrl(e.target.value)}
+                        placeholder="/boats/sovereign.jpg or https://..."
+                        className="flex-1 rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-mono"
+                      />
+                      <label className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 px-2.5 py-1.5 text-xs font-semibold text-slate-700 cursor-pointer shrink-0">
+                        <Upload className="h-3.5 w-3.5 text-orange-500" />
+                        Upload
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            const reader = new FileReader();
+                            reader.onload = () => {
+                              if (typeof reader.result === 'string') {
+                                setImageUrl(reader.result);
+                              }
+                            };
+                            reader.readAsDataURL(file);
+                          }}
+                        />
+                      </label>
+                    </div>
+                  </div>
                 </div>
               </div>
 

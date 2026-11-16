@@ -42,6 +42,8 @@ export interface Boat {
   specificationTier: string;
   googleSheetId?: string;
   googleWorksheetName?: string;
+  /** 9-digit Maritime Mobile Service Identity — used for live AIS tracking (MarineTraffic). */
+  mmsi?: string;
   createdAt: string;
   updatedAt: string;
 }

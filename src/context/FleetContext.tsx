@@ -74,6 +74,7 @@ interface FleetContextValue {
   createOrUpdateBoat: (
     payload: Omit<Boat, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }
   ) => { ok: boolean; error?: string; boatId?: string };
+  updateBoatMmsi: (boatId: string, mmsi: string) => { ok: boolean; error?: string };
 
   // Mutations — Inventory & Stock Movements
   createOrUpdateInventoryItem: (
@@ -162,7 +163,19 @@ export function FleetProvider({ children }: { children: React.ReactNode }) {
         if (parsed.users?.length) setUsers(parsed.users);
         if (parsed.currentUserId) setCurrentUserId(parsed.currentUserId);
         if (typeof parsed.isAuthenticated === 'boolean') setIsAuthenticated(parsed.isAuthenticated);
-        if (parsed.boats?.length) setBoats(parsed.boats);
+        if (parsed.boats?.length) {
+          const seedMap = new Map(SEED_BOATS.map((b) => [b.id, b]));
+          setBoats(
+            parsed.boats.map((b: Boat) => {
+              const seed = seedMap.get(b.id);
+              return {
+                ...b,
+                imageUrl: b.imageUrl || seed?.imageUrl || '/boats/sovereign.jpg',
+                mmsi: b.mmsi !== undefined ? b.mmsi : seed?.mmsi,
+              };
+            })
+          );
+        }
         if (parsed.inventory?.length) setInventory(parsed.inventory);
         if (parsed.movements?.length) setMovements(parsed.movements);
         if (parsed.restockRequests?.length) setRestockRequests(parsed.restockRequests);
@@ -435,6 +448,42 @@ export function FleetProvider({ children }: { children: React.ReactNode }) {
       });
       return { ok: true, boatId: newId };
     }
+  };
+
+  const updateBoatMmsi: FleetContextValue['updateBoatMmsi'] = (boatId, mmsi) => {
+    if (currentUser.role !== 'ADMIN') {
+      return { ok: false, error: 'Only ADMIN users can configure vessel tracking.' };
+    }
+    const cleaned = mmsi.replace(/\D/g, '');
+    if (cleaned && cleaned.length !== 9) {
+      return { ok: false, error: 'MMSI must be exactly 9 digits.' };
+    }
+    const boat = boats.find((b) => b.id === boatId);
+    if (!boat) return { ok: false, error: 'Vessel not found.' };
+
+    setBoats((prev) =>
+      prev.map((b) =>
+        b.id === boatId
+          ? { ...b, mmsi: cleaned || undefined, updatedAt: new Date().toISOString() }
+          : b
+      )
+    );
+    appendAudit(
+      'BOAT_TRACKING_UPDATED',
+      'BOAT',
+      boatId,
+      cleaned
+        ? `Linked ${boat.name} to AIS MMSI ${cleaned}`
+        : `Removed AIS MMSI link from ${boat.name}`
+    );
+    addToast({
+      type: 'success',
+      title: 'Tracking Updated',
+      description: cleaned
+        ? `${boat.name} is now tracked via MMSI ${cleaned}.`
+        : `Live tracking disabled for ${boat.name}.`,
+    });
+    return { ok: true };
   };
 
   const createOrUpdateInventoryItem: FleetContextValue['createOrUpdateInventoryItem'] = (payload) => {
@@ -1240,6 +1289,7 @@ export function FleetProvider({ children }: { children: React.ReactNode }) {
         getBoatById,
         getBoatInventory,
         createOrUpdateBoat,
+        updateBoatMmsi,
         createOrUpdateInventoryItem,
         recordStockMovement,
         submitRestockRequest,
